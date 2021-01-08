@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+clock global_x;
+int global_i;
+
+chan go;</declaration>
+	<template>
+		<name x="5" y="5">Process1</name>
+		<declaration>// Place local declarations here.
+clock local_x;
+int local_i;</declaration>
+		<location id="id0" x="0" y="68">
+			<name x="-34" y="51">P2</name>
+		</location>
+		<location id="id1" x="0" y="0">
+			<name x="-34" y="-25">P1</name>
+		</location>
+		<init ref="id1"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="assignment" x="-68" y="25">local_x=0</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="59" y="-25">local_x&gt;5&amp;&amp;local_i&lt;100</label>
+			<label kind="synchronisation" x="25" y="-25">go?</label>
+			<label kind="assignment" x="42" y="42">global_i+=1,local_i+=2</label>
+			<nail x="187" y="0"/>
+			<nail x="187" y="68"/>
+		</transition>
+	</template>
+	<template>
+		<name>Process2</name>
+		<declaration>clock local_x;
+int local_i;</declaration>
+		<location id="id2" x="0" y="0">
+			<name x="-34" y="-8">P0</name>
+		</location>
+		<init ref="id2"/>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id2"/>
+			<label kind="guard" x="0" y="17">local_x&gt;10</label>
+			<label kind="synchronisation" x="0" y="51">go!</label>
+			<label kind="assignment" x="0" y="34">local_x=0</label>
+			<nail x="-34" y="42"/>
+			<nail x="8" y="76"/>
+			<nail x="34" y="42"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id2"/>
+			<label kind="guard" x="0" y="-102">local_x&gt;10&amp;&amp;
+local_i&lt;100</label>
+			<label kind="assignment" x="0" y="-68">local_x=0,local_i+=10</label>
+			<nail x="-42" y="-42"/>
+			<nail x="8" y="-68"/>
+			<nail x="17" y="-34"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+p1 = Process1();
+p2 = Process2();
+// List one or more processes to be composed into a system.
+system p1,p2;
+    </system>
+	<queries>
+		<query>
+			<formula>E&lt;&gt; p1.local_i &gt; 10</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
