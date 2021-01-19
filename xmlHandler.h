@@ -4,6 +4,6 @@
 #include "common.h"
 #include "agent.h"
 
-bool createXmlFile(const string& fileName, vector<Agent> agents);
+bool createXmlFile(const int satisfied, const string& fileName, vector<Agent> agents);
 
 #endif

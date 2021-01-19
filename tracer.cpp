@@ -192,7 +192,6 @@ void loadIF(istream& file)
     string section;
     char name[32];
     int index;
-
     while (getline(file, section))
     {
         if (section == "layout")
@@ -636,8 +635,10 @@ ostream &operator << (ostream &o, const Transition &t)
 
 /* Read and print a trace file.
  */
-void loadTrace(istream& file)
+int loadTrace(istream& file)
 {
+    int satisfied = 0;
+
     /* Read and print trace. */
     cout << "State: " << State(file) << endl;
     for (;;)
@@ -660,6 +661,8 @@ void loadTrace(istream& file)
         cout << "\nTransition: " << transition << endl
              << "\nState: " << state << endl;
     }
+
+    return satisfied;
 }
 
 static string const_str_move = "movement";
@@ -760,7 +763,7 @@ void clear()
     variables.clear();
 }
 
-int test(istream& file, vector<Agent>& agents)
+int parseTrace(istream& file, vector<Agent>& agents)
 {
     string name = "";
     int index, id_i, task_i, id_x, index_actions = 0;
@@ -771,144 +774,150 @@ int test(istream& file, vector<Agent>& agents)
     int const_len_tf = const_str_tf.size();
     int const_len_time = const_str_time.size();
     vector<Status> cs;
-
-    for (size_t p = 0; p < processCount; p++)
-    {
-        name = processes[p].name;
-        index = name.find(const_str_move);
-        if(index != string::npos)
-        {
-            Agent agent(0);
-            id_i = stoi(processes[p].name.substr(const_len_move, const_len_move));
-            agent.id = id_i;
-            agents.push_back(agent);
-        }
-    }
-
-    for(int i = 0; i < agents.size(); i++)
-    {
-        cs.push_back(Status());
-    }
-    printf("should be fine!%d\n", agents.size());  
-    //cout << "State: " << State(file) << endl;
-    State state(file);
-    printf("state initialized!\n");    
-    createState(state, agents, cs);
-    //cout << "State: " << state << endl;
-    //add the states into agents
-    for(int i = 0; i < agents.size(); i++)
-    {
-        agents[i].add_state(cs[i]);
-    }
-    printf("state created!\n");    
+    int satisfied = 0;
     
-
-    for (;;)
+    if(file.peek() == EOF)
     {
-        /* Skip white space. */
-        file >> skipspaces;
-
-        /* A dot terminates the trace. */
-        if (file.peek() == '.')
+        satisfied = 0;
+        printf("NOT satisfied. No XML generated!\n");
+    }
+    else
+    {
+        for (size_t p = 0; p < processCount; p++)
         {
-            file.get();
-            break;
+            name = processes[p].name;
+            index = name.find(const_str_move);
+            if(index != string::npos)
+            {
+                Agent agent(0);
+                id_i = stoi(processes[p].name.substr(const_len_move, const_len_move));
+                agent.id = id_i;
+                agents.push_back(agent);
+            }
         }
-        /* Read a state and a transition. */
-        State state(file);
-        Transition transition(file);
 
-        /* Print transition and state. */
-        //cout << "\nTransition: " << transition << endl
-        //     << "\nState: " << state << endl;
+        for(int i = 0; i < agents.size(); i++)
+        {
+            cs.push_back(Status());
+        }
+        //cout << "State: " << State(file) << endl;
+        State state(file); 
         createState(state, agents, cs);
-
-        //Transition
-        Action action;
-        for (auto& edge: transition.edges)
-        {
-            id_i = -1;
-            eid = processes[edge.process].edges[edge.edge];
-            src = edges[eid].source;
-            dst = edges[eid].target;
-            guard = edges[eid].guard;
-            sync = edges[eid].sync;
-            update = edges[eid].update;
-            name = processes[edge.process].name;
-
-            //int test_i = expressions[sync].compare("0");
-            //int test_i_layout = layout[src].name.compare(const_str_initial_position);
-            //string test_s = expressions[sync];
-            //string test_s_layout = layout[src].name;
-
-            //eid = layout[src].name.compare("const_str_initial_position");
-
-            if(expressions[sync] != "0" || layout[src].name == const_str_initial_position)
-            {
-                //start to move
-                index = name.find(const_str_move);
-                if(index != string::npos)
-                {
-                    id_i = stoi(name.substr(const_len_move, const_len_move));
-                    action.type = ACT_MS;
-                    action.target = layout[dst].name;
-                    action.occurance_time = 0;
-                    action.order = index_actions;
-                    index_actions++;
-                }
-            }
-            else
-            {
-                index = name.find(const_str_move);
-                if(index != string::npos)
-                {
-                    //finish to move
-                    id_i = stoi(name.substr(const_len_move, const_len_move));
-                    action.type = ACT_MF;
-                    action.target = layout[dst].name;
-                    action.occurance_time = stoi(expressions[guard].substr(const_len_time, const_len_time));
-                    action.order = index_actions;
-                    index_actions++;
-                }
-                else
-                {
-                    index = name.find(const_str_task);
-                    if(index != string::npos)
-                    {
-                        if(layout[src].name == "T0")
-                        {
-                            //start a task
-                            action.type = ACT_TS;
-                            action.target = layout[dst].name;
-                            action.occurance_time = 0;
-                            action.order = index_actions;
-                            index_actions++;
-                        }
-                        else
-                        {
-                            //finish a task
-                            action.type = ACT_TF;
-                            action.target = "T0";
-                            action.occurance_time = stoi(expressions[guard].substr(const_len_time, const_len_time));
-                            action.order = index_actions;
-                            index_actions++;
-                        } 
-                    }
-                    id_i = stoi(name.substr(const_len_task, const_len_task));
-                }
-            }
-        }
-        //find the agent
+        //add the states into agents
         for(int i = 0; i < agents.size(); i++)
         {
             agents[i].add_state(cs[i]);
+        }       
+
+        for (;;)
+        {
+            /* Skip white space. */
+            file >> skipspaces;
+
+            /* A dot terminates the trace. */
+            if (file.peek() == '.')
+            {
+                file.get();
+                break;
+            }
+            /* Read a state and a transition. */
+            State state(file);
+            Transition transition(file);
+
+            /* Print transition and state. */
+            //cout << "\nTransition: " << transition << endl
+            //     << "\nState: " << state << endl;
+            createState(state, agents, cs);
+
+            //Transition
+            Action action;
+            for (auto& edge: transition.edges)
+            {
+                id_i = -1;
+                eid = processes[edge.process].edges[edge.edge];
+                src = edges[eid].source;
+                dst = edges[eid].target;
+                guard = edges[eid].guard;
+                sync = edges[eid].sync;
+                update = edges[eid].update;
+                name = processes[edge.process].name;
+
+                //int test_i = expressions[sync].compare("0");
+                //int test_i_layout = layout[src].name.compare(const_str_initial_position);
+                //string test_s = expressions[sync];
+                //string test_s_layout = layout[src].name;
+
+                //eid = layout[src].name.compare("const_str_initial_position");
+
+                if(expressions[sync] != "0" || layout[src].name == const_str_initial_position)
+                {
+                    //start to move
+                    index = name.find(const_str_move);
+                    if(index != string::npos)
+                    {
+                        id_i = stoi(name.substr(const_len_move, const_len_move));
+                        action.type = ACT_MS;
+                        action.target = layout[dst].name;
+                        action.occurance_time = 0;
+                        action.order = index_actions;
+                        index_actions++;
+                    }
+                }
+                else
+                {
+                    index = name.find(const_str_move);
+                    if(index != string::npos)
+                    {
+                        //finish to move
+                        id_i = stoi(name.substr(const_len_move, const_len_move));
+                        action.type = ACT_MF;
+                        action.target = layout[dst].name;
+                        action.occurance_time = stoi(expressions[guard].substr(const_len_time, const_len_time));
+                        action.order = index_actions;
+                        index_actions++;
+                    }
+                    else
+                    {
+                        index = name.find(const_str_task);
+                        if(index != string::npos)
+                        {
+                            if(layout[src].name == "T0")
+                            {
+                                //start a task
+                                action.type = ACT_TS;
+                                action.target = layout[dst].name;
+                                action.occurance_time = 0;
+                                action.order = index_actions;
+                                index_actions++;
+                            }
+                            else
+                            {
+                                //finish a task
+                                action.type = ACT_TF;
+                                action.target = "T0";
+                                action.occurance_time = stoi(expressions[guard].substr(const_len_time, const_len_time));
+                                action.order = index_actions;
+                                index_actions++;
+                            } 
+                        }
+                        id_i = stoi(name.substr(const_len_task, const_len_task));
+                    }
+                }
+            }
+            //find the agent
+            for(int i = 0; i < agents.size(); i++)
+            {
+                agents[i].add_state(cs[i]);
+            }
+            agents[id_i].add_action(action);
         }
-        agents[id_i].add_action(action);
+
+        printf("Satisfied. A XML generated!\n");
+        satisfied = 1;
     }
 
-    return 1;
+    return satisfied;
 }
-
 
 int parse(int argc, char *argv[])
 {

@@ -4,10 +4,10 @@
 #include "common.h"
 #include "agent.h"
 
-int test(istream& file, vector<Agent>& agents);
+int parseTrace(istream& file, vector<Agent>& agents);
 int parse(int argc, char *argv[]);
 void loadIF(istream& file);
-void loadTrace(istream& file);
+int loadTrace(istream& file);
 void clear();
 
 #endif

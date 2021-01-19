@@ -5,7 +5,7 @@
 
 using namespace std;
 
-bool createXmlFile(const string& fileName, vector<Agent> agents)
+bool createXmlFile(const int satisfied, const string& fileName, vector<Agent> agents)
 {
     int index_agent = 0, index_states = 0, index_tasks = 0, states_size = 0, actions_size[agents.size()];
     int next_task_index = 0, next_task_agent = 0;
@@ -20,95 +20,101 @@ bool createXmlFile(const string& fileName, vector<Agent> agents)
     {
         myDocument = new TiXmlDocument();
         rootElement = new TiXmlElement("Traces");
-
-        states_size = agents[0].get_states().size();
-        for(index_agent = 0; index_agent < agents.size(); index_agent++)
+        rootElement->SetAttribute("result", to_string(satisfied).c_str());
+        if(satisfied == 1)
         {
-            agent_temp = agents[index_agent];
-            states_it[index_agent] = agent_temp.get_states().begin();
-            actions_size[index_agent] = agent_temp.get_states().size();
-        }
-
-        //states nodes
-        for(index_states = 0; index_states < states_size; index_states++)
-        {        
-            TiXmlElement *stateElement = new TiXmlElement("State");
+            states_size = agents[0].get_states().size();
             for(index_agent = 0; index_agent < agents.size(); index_agent++)
             {
                 agent_temp = agents[index_agent];
-                state_temp = agent_temp.get_states()[index_states];
-                TiXmlElement *agentElement = new TiXmlElement("Agent");
-                TiXmlElement *milestoneElement = new TiXmlElement("Milestone");
-                TiXmlText *milestoneContent = new TiXmlText(state_temp.position.c_str());
-                milestoneElement->LinkEndChild(milestoneContent);
-                TiXmlElement *taskElement = new TiXmlElement("Task");
-                TiXmlText *taskContent = new TiXmlText(state_temp.task.c_str());
-                taskElement->LinkEndChild(taskContent);
-                TiXmlElement *finishElement = new TiXmlElement("Finish");
-                for(index_tasks = 0; index_tasks < state_temp.tasks_status.size(); index_tasks++)
+                states_it[index_agent] = agent_temp.get_states().begin();
+                actions_size[index_agent] = agent_temp.get_states().size();
+            }
+
+            //states nodes
+            for(index_states = 0; index_states < states_size; index_states++)
+            {        
+                TiXmlElement *stateElement = new TiXmlElement("State");
+                for(index_agent = 0; index_agent < agents.size(); index_agent++)
                 {
-                    if(state_temp.tasks_status[index_tasks] == 1)
+                    agent_temp = agents[index_agent];
+                    state_temp = agent_temp.get_states()[index_states];
+                    TiXmlElement *agentElement = new TiXmlElement("Agent");
+                    TiXmlElement *milestoneElement = new TiXmlElement("Milestone");
+                    TiXmlText *milestoneContent = new TiXmlText(state_temp.position.c_str());
+                    milestoneElement->LinkEndChild(milestoneContent);
+                    TiXmlElement *taskElement = new TiXmlElement("Task");
+                    TiXmlText *taskContent = new TiXmlText(state_temp.task.c_str());
+                    taskElement->LinkEndChild(taskContent);
+                    TiXmlElement *finishElement = new TiXmlElement("Finish");
+                    for(index_tasks = 0; index_tasks < state_temp.tasks_status.size(); index_tasks++)
                     {
-                        TiXmlElement *finTaskElement = new TiXmlElement("Task");
-                        TiXmlText *finTaskContent = new TiXmlText(("T" + to_string(index_tasks)).c_str());
-                        finTaskElement->LinkEndChild(finTaskContent);
-                        finishElement->LinkEndChild(finTaskElement);
+                        if(state_temp.tasks_status[index_tasks] == 1)
+                        {
+                            TiXmlElement *finTaskElement = new TiXmlElement("Task");
+                            TiXmlText *finTaskContent = new TiXmlText(("T" + to_string(index_tasks)).c_str());
+                            finTaskElement->LinkEndChild(finTaskContent);
+                            finishElement->LinkEndChild(finTaskElement);
+                        }   
+                    }
+                    TiXmlElement *iterationElement = new TiXmlElement("Iteration");
+                    TiXmlText *iterationContent = new TiXmlText(to_string(state_temp.iteration).c_str());
+                    iterationElement->LinkEndChild(iterationContent);
+                    
+                    agentElement->SetAttribute("id", agent_temp.id);
+                    agentElement->LinkEndChild(milestoneElement);
+                    agentElement->LinkEndChild(taskElement);
+                    agentElement->LinkEndChild(finishElement);
+                    agentElement->LinkEndChild(iterationElement);
+
+                    stateElement->LinkEndChild(agentElement);
+                }
+
+                rootElement->LinkEndChild(stateElement);
+                //action
+                for(index_agent = 0; index_agent < agents.size(); index_agent++)
+                {
+                    agent_temp = agents[index_agent];
+                    action_temp = agent_temp.get_next_action();
+                    if(next_task_index == action_temp.order)
+                    {
+                        action_next = action_temp;
+                        next_task_agent = index_agent;
+                        next_task_index++;
+                        agents[index_agent].pop_action();
+                        break;
                     }
                 }
-                TiXmlElement *iterationElement = new TiXmlElement("Iteration");
-                TiXmlText *iterationContent = new TiXmlText(to_string(state_temp.iteration).c_str());
-                iterationElement->LinkEndChild(iterationContent);
-                
-                agentElement->SetAttribute("id", agent_temp.id);
-                agentElement->LinkEndChild(milestoneElement);
-                agentElement->LinkEndChild(taskElement);
-                agentElement->LinkEndChild(finishElement);
-                agentElement->LinkEndChild(iterationElement);
+                //action node
+                TiXmlElement *actionElement = new TiXmlElement("Action");
+                TiXmlElement *agentElement = new TiXmlElement("Agent");
+                agentElement->SetAttribute("id", next_task_agent);
 
-                stateElement->LinkEndChild(agentElement);
+                TiXmlElement *typeElement = new TiXmlElement("Type");
+                TiXmlText *typeContent = new TiXmlText(getActionType(action_next).c_str());
+                typeElement->LinkEndChild(typeContent);
+
+                TiXmlElement *targetElement = new TiXmlElement("Target");
+                TiXmlText *targetContent = new TiXmlText(action_next.target.c_str());
+                targetElement->LinkEndChild(targetContent);
+
+                TiXmlElement *timeElement = new TiXmlElement("Time");
+                TiXmlText *timeContent = new TiXmlText(to_string(action_next.occurance_time).c_str());
+                timeElement->LinkEndChild(timeContent);
+
+                agentElement->LinkEndChild(typeElement);
+                agentElement->LinkEndChild(targetElement);
+                agentElement->LinkEndChild(timeElement);
+
+                actionElement->LinkEndChild(agentElement);
+
+                rootElement->LinkEndChild(actionElement);
             }
-
-            rootElement->LinkEndChild(stateElement);
-            //action
-            for(index_agent = 0; index_agent < agents.size(); index_agent++)
-            {
-                agent_temp = agents[index_agent];
-                action_temp = agent_temp.get_next_action();
-                if(next_task_index == action_temp.order)
-                {
-                    action_next = action_temp;
-                    next_task_agent = index_agent;
-                    next_task_index++;
-                    agents[index_agent].pop_action();
-                    break;
-                }
-            }
-            //action node
-            TiXmlElement *actionElement = new TiXmlElement("Action");
-            TiXmlElement *agentElement = new TiXmlElement("Agent");
-            agentElement->SetAttribute("id", next_task_agent);
-
-            TiXmlElement *typeElement = new TiXmlElement("Type");
-            TiXmlText *typeContent = new TiXmlText(getActionType(action_next).c_str());
-            typeElement->LinkEndChild(typeContent);
-
-            TiXmlElement *targetElement = new TiXmlElement("Target");
-            TiXmlText *targetContent = new TiXmlText(action_next.target.c_str());
-            targetElement->LinkEndChild(targetContent);
-
-            TiXmlElement *timeElement = new TiXmlElement("Time");
-            TiXmlText *timeContent = new TiXmlText(to_string(action_next.occurance_time).c_str());
-            timeElement->LinkEndChild(timeContent);
-
-            agentElement->LinkEndChild(typeElement);
-            agentElement->LinkEndChild(targetElement);
-            agentElement->LinkEndChild(timeElement);
-
-            actionElement->LinkEndChild(agentElement);
-
-            rootElement->LinkEndChild(actionElement);
         }
-
+        else
+        {
+            //
+        }
         myDocument->LinkEndChild(rootElement);
         myDocument->SaveFile(fileName.c_str());
     }
