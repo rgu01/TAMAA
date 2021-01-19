@@ -18,22 +18,28 @@
 using namespace std;
 
 bool go;
-//int counter = 1;
+
+void clearFiles()
+{
+    const string path_if = "sh/model/ta_model_agents.if";
+    const string path_xtr = "sh/traces/t-1.xtr";
+    const string path_out_xml = "result/plan.xml";
+    ofstream file_if(path_if, ios_base::out); 
+    ofstream file_xtr(path_xtr, ios_base::out); 
+}
 
 void parse(vector<Agent> agents)
 {
     const string path_if = "sh/model/ta_model_agents.if";
     const string path_xtr = "sh/traces/t-1.xtr";
-    //string path_xtr = "sh/traces/t-"+std::to_string(counter)+".xtr";
     const string path_out_xml = "result/plan.xml";
+    int satisfied = 0;
 
-    //counter++;
     clear();
+    clearFiles();
 
     system("sh/cmd.sh");
-    printf("lalala.....\n");
-    /* Load model in intermediate format.
-    */
+    /* Load model in intermediate format */
     ifstream file_if(path_if);
     if (!file_if)
     {
@@ -42,20 +48,19 @@ void parse(vector<Agent> agents)
     }
     loadIF(file_if);
     file_if.close();
-
-    /* Load trace.
-    */
+    
+    printf("PARSE: load traces...\n");
+    /* Load trace */
     ifstream file_xtr(path_xtr);
     if (!file_xtr)
     {
         perror(path_xtr.c_str());
         exit(EXIT_FAILURE);
     }
-    //loadTrace(file_xtr);
-    test(file_xtr, agents);
+    satisfied = parseTrace(file_xtr, agents);
     file_xtr.close();
-
-    createXmlFile(path_out_xml, agents);
+    
+    createXmlFile(satisfied, path_out_xml, agents);
 }
 
 void* connect(void* args)
