@@ -962,4 +962,6 @@ int parse(int argc, char *argv[])
     {
         cerr << "Cought exception: " << e.what() << endl;
     }
+
+    return 0;
 }

@@ -191,7 +191,7 @@ int receive_msg_from_mmt(const int client_sockfd)
                 else
                 {
                     send(client_sockfd, "got it\n", sizeof("got it\n"), 0);
-                    printf("RECeive: Incoming message (length: %d): %s\n", read_return, buffer);
+                    printf("RECeive: Incoming message (length: %ld): %s\n", read_return, buffer);
                 }
             }
         }
