@@ -114,7 +114,7 @@ int receive_xml_from_mmt(const int client_sockfd, const char* file_path)
         {
             return(-1);
         }
-        //close(fp);  
+        fclose(fp);  
         //close(client_sockfd); 
 
         /*printf("RECeive: waiting for msg from client: %d\n", client_sockfd);
