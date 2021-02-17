@@ -669,14 +669,14 @@ static string const_str_move = "movement";
 static string const_str_task = "taskExe";
 static string const_str_initial_position = "initial";
 static string const_str_iteration = "iteration";
-static string const_str_ts = "ts";
+//static string const_str_ts = "ts";
 static string const_str_tf = "tf";
 static string const_str_time = "t >= ";
 
 void createState(State& state, vector<Agent>& agents, vector<Status>& cs)
 {
     string name = "";
-    int index, id_i, task_i, id_x, index_actions = 0;
+    int index, agent_id_i, task_i, id_x, index_actions = 0;
     int eid, src, dst, guard, sync, update;
     int const_len_move = const_str_move.size();
     int const_len_task = const_str_task.size();
@@ -693,10 +693,10 @@ void createState(State& state, vector<Agent>& agents, vector<Status>& cs)
         if(index != string::npos)
         {
             // movement TA
-            id_i = stoi(name.substr(const_len_move, const_len_move));
-            if(id_i < agents.size())
+            agent_id_i = stoi(name.substr(const_len_move, const_len_move));
+            if(agent_id_i < agents.size())
             {
-                cs[id_i].position = layout[id_x].name;
+                cs[agent_id_i].position = layout[id_x].name;
             }
         }
         else
@@ -705,10 +705,10 @@ void createState(State& state, vector<Agent>& agents, vector<Status>& cs)
             if(index != string::npos)
             {
                 //task TA
-                id_i = stoi(name.substr(const_len_task, const_len_task));
-                if(id_i < agents.size())
+                agent_id_i = stoi(name.substr(const_len_task, const_len_task));
+                if(agent_id_i < agents.size())
                 {
-                    cs[id_i].task = layout[id_x].name;
+                    cs[agent_id_i].task = layout[id_x].name;
                 }
             }
         }
@@ -720,27 +720,27 @@ void createState(State& state, vector<Agent>& agents, vector<Status>& cs)
         if(index != string::npos)
         {
             //iteration
-            id_i = stoi(variables[v].substr(const_len_iteration+1, const_len_iteration+1));
-            if(id_i < agents.size())
+            agent_id_i = stoi(variables[v].substr(const_len_iteration + 1, const_len_iteration + 1));
+            if(agent_id_i < agents.size())
             {
-                cs[id_i].iteration = state.getVariable(v);
+                cs[agent_id_i].iteration = state.getVariable(v);
             }
         }
         index = variables[v].find(const_str_tf);
         if(index != string::npos)
         {
             //finished tasks
-            id_i = stoi(variables[v].substr(const_len_task, const_len_task));
-            task_i = stoi(variables[v].substr(const_len_task + const_len_tf + 3, const_len_task + const_len_tf + 3));
-            if(id_i < agents.size())
+            agent_id_i = stoi(variables[v].substr(const_len_tf + 1, const_len_tf +1 ));
+            task_i = stoi(variables[v].substr(const_len_tf + 4, const_len_task + const_len_tf + 4));
+            if(agent_id_i < agents.size())
             {
-                if(task_i < cs[id_i].tasks_status.size())
+                if(task_i < cs[agent_id_i].tasks_status.size())
                 {
-                    cs[id_i].tasks_status[task_i] = state.getVariable(v);
+                    cs[agent_id_i].tasks_status[task_i] = state.getVariable(v);
                 }
                 else
                 {
-                    cs[id_i].tasks_status.push_back(state.getVariable(v));
+                    cs[agent_id_i].tasks_status.push_back(state.getVariable(v));
                 } 
             }
         }
