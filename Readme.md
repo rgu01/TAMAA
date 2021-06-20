@@ -1,4 +1,4 @@
-TAMAA: timed automata based mission planner for multiple autonomous agents
+# TAMAA: timed automata based mission planner for multiple autonomous agents
 - run "chmod +x prepare.sh"
 - run "./prepare.sh"
 - run "./server"
