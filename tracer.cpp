@@ -909,6 +909,11 @@ int parseTrace(istream& file, vector<Agent>& agents)
             {
                 agents[i].add_state(cs[i]);
             }
+            if(id_i<0)
+            {
+                assert(id_i<0);
+            }
+            assert(id_i>=0);
             agents[id_i].add_action(action);
         }
 
