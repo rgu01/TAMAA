@@ -14,5 +14,5 @@ echo "CMD: Transforming XML file to IF file..."
 UPPAAL_COMPILE_ONLY=1 ${HERE}/uppaal/verifyta ${HERE}/model/ta_model_agents_test.xml -> ${HERE}/model/ta_model_agents.if
 echo "CMD: Done transforming XML to IF!"
 echo "CMD: Verifying the model and generating traces!"
-${HERE}/uppaal/verifyta -t2 -o2 -u -f ${HERE}/traces/t ${HERE}/model/ta_model_agents_test.xml
+${HERE}/uppaal/verifyta -t2 -o0 -u -f ${HERE}/traces/t ${HERE}/model/ta_model_agents_test.xml
 echo "CMD: Done Verification!"
